@@ -1,1 +1,1 @@
-# Python-Basics-for-Data-Science-Project
+# Data-Science-Projects
