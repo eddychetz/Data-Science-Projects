@@ -31,7 +31,7 @@ In the last project, I have learned data wrangling and visualization skills whil
 
 ### About this Project
 
-In this project, I'll work with data from one of Africa's largest open data platforms [openAfrica](). I'll look at air quality data from Nairobi, Lagos, and Dar es Salaam; and build a time seriesmodel to predict PM 2.5 readings throughout the day.
+In this project, I'll work with data from one of Africa's largest open data platforms [openAfrica](https://africaopendata.org/). I'll look at air quality data from Nairobi, Lagos, and Dar es Salaam; and build a time series model to predict PM 2.5 readings throughout the day.
 
 *Some of the things you'll learn in this project are:*
 
@@ -41,3 +41,16 @@ In this project, I'll work with data from one of Africa's largest open data plat
 - How to improve a model by tuning its hyperparameters.
 
 Time series models are not only important in public health; they're a key part of Financial Engineering. Plus, concepts you learn in this project will be helpful in Natural Language Processing.
+
+## Project 4: Earthquake Damage in Nepal  
+
+### About this Project
+
+In this project, I'll work with data from [Open Data Nepal](https://opendatanepal.com/) to build a model to predict building damage from the [Nepal 2015 Earthquake](https://en.wikipedia.org/wiki/April2015Nepalearthquake). I'll work primarily with data from the Gorkha district, with additional examples from Ramechhap. _
+
+Some of the things you'll learn in this project are:
+
+- How to get data by querying a SQL database.
+- How to build a logistic regression model for classification.
+- How to build a decision tree model for classification.
+- How to incorporate ethical considerations into your model building.
