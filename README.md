@@ -61,7 +61,7 @@ In this project, we'll work with data from [Open Data Nepal](https://opendatanep
 
 In this project, we'll explore data collected by a team of Polish economists studying bankruptcy. Our goal is to build a model that can predict whether a company will go bankrupt or not.
 
-*Once we complete these project, we'll be able to:*
+*Once we complete this project, we'll be able to:*
 
 - Navigate a file system from the Linux command line
 - Load and save files using Python
