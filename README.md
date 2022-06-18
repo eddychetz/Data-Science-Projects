@@ -48,7 +48,7 @@ Time series models are not only important in public health; they're a key part o
 
 In this project, we'll work with data from [Open Data Nepal](https://opendatanepal.com/) to build a model to predict building damage from the [Nepal 2015 Earthquake](https://en.wikipedia.org/wiki/April2015Nepalearthquake). We'll work primarily with data from the Gorkha district, with additional examples from Ramechhap. _
 
-Some of the things we'll learn in this project are:
+*Some of the things we'll learn in this project are:*
 
 - How to get data by querying a SQL database.
 - How to build a logistic regression model for classification.
@@ -61,7 +61,7 @@ Some of the things we'll learn in this project are:
 
 In this project, we'll explore data collected by a team of Polish economists studying bankruptcy. Our goal is to build a model that can predict whether a company will go bankrupt or not.
 
-Once we complete these project, we'll be able to:
+*Once we complete these project, we'll be able to:*
 
 - Navigate a file system from the Linux command line
 - Load and save files using Python
