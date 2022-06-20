@@ -67,3 +67,25 @@ In this project, we'll explore data collected by a team of Polish economists stu
 - Load and save files using Python
 - Address imbalanced data using resampling techniques
 - Evaluate a model using classification metrics like precision and recall
+
+## Project 6: Customer Segmentation in USA  
+
+### About this Project
+
+In this project, we'll use data from the [2019 Survey of Consumer Finances](https://www.federalreserve.gov/econres/scfindex.htm). First, we'll identify households that have a hard time getting credit. Then we'll build a model to segment these households into subgroups. Finally, we'll create an interactive web app to share your work.
+
+This project is an example of **unsupervised learning**, specifically **clustering**. It can be used in commercial contexts for [marketing or customer segmentation](https://en.wikipedia.org/wiki/Market_segmentation) or in sociological contexts to study [social stratification](https://en.wikipedia.org/wiki/Social_stratification).
+
+*Once we complete this project, we'll be able to:*
+
+- Compare characteristics across subgroups using a **side-by-side bar chart**.
+- Build a **k-means** clustering model.
+- Conduct **feature selection** for clustering based on variance.
+- Reduce high-dimensional data using **principal component analysis (PCA)**.
+- Design, build and deploy a Dash **web application**.
+
+If you're interested in learning more about this dataset, or clustering in general, some projects that served as inspiration for this project are:
+
+Hennig, C., & Liao, T. F. (2013). "How to find an appropriate clustering for mixed-type variables with application to socio-economic stratification." Journal of the Royal Statistical Society: Series C (Applied Statistics), 62(3), 309–369. [Read more ...](https://doi.org/10.1111/j.1467-9876.2012.01066.x)
+
+Tatsat, H., Puri, S., & Lookabaugh, B. (2020). Machine learning and data science blueprints for finance: From building trading strategies to robo-advisors using Python. O’Reilly. [Read more ...](https://github.com/tatsath/fin-ml).
