@@ -68,7 +68,7 @@ In this project, we'll explore data collected by a team of Polish economists stu
 - Address imbalanced data using resampling techniques
 - Evaluate a model using classification metrics like precision and recall
 
-## Project 6: Customer Segmentation in USA  
+## Project 6: Customer Segmentation in the USA  
 
 ### About this Project
 
