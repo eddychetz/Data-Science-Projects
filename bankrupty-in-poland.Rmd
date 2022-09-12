@@ -1,0 +1,257 @@
+---
+title: "bankrupty-in-poland-tidymodels"
+subtitle: "Train and evaluate models with tidymodels"
+author: "Eddie Cheteni"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 8, fig.height = 5)
+```
+
+*This template offers an opinionated guide on how to structure a modeling analysis. Your individual modeling analysis may require you to add to, subtract from, or otherwise change this structure, but consider this a general framework to start from. If you want to learn more about using tidymodels, check out our [Getting Started](https://www.tidymodels.org/start/) guide.*
+
+# 1.0 Setup and Data
+
+First, I load the packages I need for this analysis.
+
+```{r}
+# LOAD LIBRARIES
+library(plotly)
+library(correlationfunnel)
+library(tidyverse)   # Loads dplyr, ggplot2, purrr, and other useful packages
+library(tidymodels)  # Loads parsnip, rsample, recipes, yardstick
+library(skimr)       # Quickly get a sense of data
+library(knitr)       # Pretty HTML Tables
+```
+
+For this project I am using data collected by a team of Polist economists studying bankruptcy. The data containts 6137 rows, each representing a Polish individual, annd 97 columns for th potential predicttors, providing information to forecast individual bankruptcy and help to manage their finances.
+
+**Bankrupt** is the **Dependent Variable** and shows the individual who went bankrupt.
+
+```{r}
+poland_tbl <- read_csv("../poland.csv")
+poland_tbl%>%head()%>%kable()
+```
+
+# 2.0 Skim the Data
+
+We can get a quick sense of the data using the `skim()` funtion from the `skimr` package.
+
+```{r}
+poland_tbl%>% skim()
+```
+
+We noticed that **id** is the unique identifier for each row, hence it has no predictive or descriptive epower and it can be removed.
+
+```{r}
+poland_tbl <- poland_tbl%>%
+    select(-id)%>%
+    drop_na()
+```
+
+# 3.0 Tidymodels Workflow - Genralised Linear Model (Baseline)
+
+To show the basic steps in the `tidymodels` framework, I am fitting and evaluating a simple logistic regression model as a baseline.
+
+## 3.1 Train/Test Split
+
+`rsample` provides a streamlined way to create a randomized training and test split of the original data.
+
+```{r}
+set.seed(seed = 42) 
+
+train_test_split <-
+    rsample::initial_split(
+        data = poland_tbl,     
+        prop = 0.80   
+    ) 
+
+train_test_split
+```
+
+Of the 6,137 total observations, 4,909 have been assigned to the training set and 1,228 to the test set. I save them as **train_tbl** and **test_tbl**.
+
+```{r}
+train_tbl <- train_test_split%>% 
+    training() 
+test_tbl  <- train_test_split%>% 
+    testing() 
+```
+
+## 3.2 Prepare
+
+The `recipes` package uses a **cooking metaphor** to handle all the data pre-processing, like missing values imputation, removing predictors, centering and scaling, one-hot-encoding, and more.
+
+First, I create a `recipe` where I define the transformations I want to apply to my data. In this case I create a simple recipe to change all character variables to factors.
+
+Then, I ***"prep the recipe"*** by mixing the ingredients with prep. Here I have included the prep bit in the recipe function for brevity.
+
+```{r}
+recipe_simple <- function(dataset) {
+    recipe(bankrupt ~ ., data = dataset) %>%
+        step_string2factor(all_nominal(), -all_outcomes()) %>%
+        prep(data = dataset)
+}
+```
+
+**Note** - In order to avoid **Data Leakage** (e.g: transferring information from the train set into the test set), data should be "prepped" using the train_tbl only.
+
+```{r}
+recipe_prepped <- recipe_simple(dataset = train_tbl)
+```
+
+Finally, to continue with the cooking metaphor, I "bake the recipe" to apply all pre-processing to the data sets.
+
+```{r}
+train_baked <- bake(recipe_prepped, new_data = train_tbl)
+test_baked  <- bake(recipe_prepped, new_data = test_tbl)
+
+```
+
+## 3.3 Machine Learning and Performance
+
+### Fit the Model
+
+`parsnip` is a recent addition to the `tidymodels` suite and is probably the one I like best. This package offers a unified API that allows access to several machine learning packages without the need to learn the syntax of each individual one.
+
+With 3 simple steps you can:
+
+1.  Set the type of model you want to fit (here is a logistic regression) and its mode (classification)
+
+2.  Decide which computational engine to use (glm in this case)
+
+3.  Spell out the exact model specification to fit (I'm using all variables here) and what data to use (the baked train dataset)
+
+```{r}
+logistic_glm <- logistic_reg(mode = "classification") %>%
+    set_engine("glm") %>%
+    fit(as_factor(bankrupt)~., data = train_baked)
+```
+
+If you want to use another engine, you can simply switch the `set_engine` argument (for logistic regression you can choose from `glm`, `glmnet`, `stan`, `spark`, and `keras`) and `parsnip` will take care of changing everything else for you behind the scenes.
+
+### Assess Performance
+
+```{r}
+predictions_glm <- logistic_glm %>%
+    predict(new_data = test_baked) %>%
+    bind_cols(test_baked %>% select(bankrupt))
+
+predictions_glm %>% head() %>% kable()
+```
+
+There are several metrics that can be used to investigate the performance of a classification model but for simplicity I'm only focusing on a selection of them: ***accuracy***, ***precision***, ***recall*** and ***F1_Score***.
+
+All of these measures (and many more) can be derived by the ***Confusion Matrix***, a table used to describe the performance of a classification model on a set of test data for which the true values are known.
+
+In and of itself, the confusion matrix is a relatively easy concept to get your head around as is shows the number of false positives, false negatives, true positives, and true negatives. However some of the measures that are derived from it may take some reasoning with to fully understand their meaning and use.
+
+```{r}
+predictions_glm <- predictions_glm%>%
+    mutate(bankrupt = factor(bankrupt))
+predictions_glm %>%
+    conf_mat(bankrupt, .pred_class) %>%
+    pluck(1) %>%
+    as_tibble() %>%
+    
+    # Visualize with ggplot
+    ggplot(aes(Prediction, Truth, alpha = n)) +
+    geom_tile(show.legend = FALSE) +
+    geom_text(aes(label = n), colour = "white", alpha = 1, size = 8)
+```
+
+### Accuracy
+
+The model's ***Accuracy*** is the fraction of predictions the model got right and can be easily calculated by passing the predictions_glm to the metrics function. However, accuracy is not a very reliable metric as it will provide misleading results if the data set is unbalanced.
+
+With only basic data manipulation and feature engineering the simple logistic model has achieved 80% accuracy.
+
+```{r}
+predictions_glm %>%
+    metrics(bankrupt, .pred_class) %>%
+    select(-.estimator) %>%
+    filter(.metric == "accuracy") %>%
+    kable()
+```
+
+### Precision and Recall
+
+***Precision*** shows how sensitive models are to False Positives (i.e. predicting a individual is going bankrupt when he-she is actually not) whereas ***Recall*** looks at how sensitive models are to False Negatives (i.e. forecasting that an individual is not bankrupt whilst he-she is in fact bankrupt).
+
+**These are very relevant business metrics** because organisations are particularly interested in accurately predicting which individuals are truly at risk of bankrupt so that they can target them with saving strategies. At the same time they want to minimize efforts of non-bankrupt individuals incorrectly classified as bankrupt who are instead not
+
+```{r}
+prec_recall <- tibble(
+    "precision" = precision(predictions_glm, 
+                            bankrupt, 
+                            .pred_class) %>%
+            select(.estimate),
+        "recall" = recall(predictions_glm, 
+                          bankrupt, 
+                          .pred_class) %>%
+            select(.estimate)) 
+prec_recall%>%unnest()%>%
+    rename(precision = .estimate, recall = .estimate1)%>%
+    kable()
+```
+
+### F1 Score
+
+Another popular performance assessment metric is the ***F1 Score***, which is the harmonic average of the precision and recall. An F1 score reaches its best value at 1 with perfect precision and recall.
+
+```{r}
+predictions_glm %>%
+    f_meas(bankrupt, .pred_class) %>%
+    select(-.estimator) %>%
+    kable()
+```
+
+# 4.0 Random Forest - Machine Learning Modeling
+
+This is where the real beauty of `tidymodels` comes into play. Now I can use this tidy modelling framework to fit a Random Forest model with the `ranger` engine.
+
+## 4.1 Cross Validation - 10-Fold
+
+To further refine the model's predictive power, I am implementing a 10-fold cross validation using `vfold_cv` from `rsample`, which splits again the initial training data.
+
+```{r}
+cross_val_tbl <- vfold_cv(train_tbl, v = 10)
+cross_val_tbl
+```
+
+If we take a further look, we should recognise the 6,137 number, which is the total number of observations in the initial train_tbl. In each round, 614 observations will in turn be retained from estimation and used to validate the model for that fold.
+
+```{r}
+cross_val_tbl %>% pluck("splits", 1)
+```
+
+To avoid confusion and distinguish the initial train/test splits from those used for cross validation, the author of `rsample` **Max Kuhn** has coined two new terms: the ***analysis*** and the ***assessment*** sets. The former is the portion of the train data used to recursively estimate the model, where the latter is the portion used to validate each estimate.
+
+## 4.2 Machine Learning
+
+### Random Forest
+
+Switching to another model could not be simpler! All I need to do is to change the **type of model** to `random_forest`, add its hyper-parameters, change the `set_engine` argument to `randomForest`, and I'm ready to go.
+
+### Assess Performance
+
+I've found that `yardstick` has a very handy confusion matrix `summary()` function, which returns an array of **13 different confusion matrix metrics**\_ but in this case I want to see the four I used for the glm model.
+
+```{r}
+logistic_glm %>%
+    conf_mat(truth, prediction) %>%
+    summary() %>%
+    select(-.estimator) %>%
+    filter(.metric %in% c("accuracy", "precision", "recall", "f_meas")) %>%
+    kable()
+```
+
+## Parting Thoughts
+
+One of the great advantage of `tidymodels` is the flexibility and ease of access to every phase of the analysis workflow. Creating the modelling pipeline is a breeze and you can easily re-use the initial framework by changing model type with `parsnip` and data pre-processing with `recipes` and in no time you're ready to check your new model's performance with `yardstick`.
+
+In any analysis you would typically audit several models and `parsnip` frees you up from having to learn the unique syntax of every modelling engine so that you can focus on finding the best solution for the problem at hand.
+
+If you would like to learn how to **apply Data Science to Business Problems**, take the program that I chose to build my skills. You will learn tools like `parsnip` and `H2O` for machine learning and `Shiny` for web applications, and many more critical tools (`tidyverse`, `recipes`, and more!) for applying data science to business problems.
